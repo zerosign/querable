@@ -7,7 +7,6 @@ pub mod kind;
 pub mod types;
 
 use error::Error;
-use kind::QueryKind;
 use types::Queryable;
 
 pub fn lookup<'a, V: 'a, Q>(v: V, query: Q) -> Result<V, Error>
@@ -73,6 +72,14 @@ mod tests {
         }
 
         #[inline]
+        pub fn string<V>(v: V) -> Value
+        where
+            V: Into<String>,
+        {
+            Value::Literal(Literal::String(v.into()))
+        }
+
+        #[inline]
         pub fn dict() -> Value {
             Value::Dictionary(HashMap::new())
         }
@@ -81,6 +88,39 @@ mod tests {
         pub fn list() -> Value {
             Value::Array(vec![])
         }
+
+        #[inline]
+        pub fn bool<V>(v: V) -> Value
+        where
+            V: Into<bool>,
+        {
+            Value::Literal(Literal::Bool(v.into()))
+        }
+    }
+
+    macro_rules! value_conv {
+        ($($conv:path => [$($src:ty),*]),*) => {
+            $($(impl From<$src> for Value {
+
+                #[inline]
+                fn from(v: $src) -> Self {
+                    $conv(v)
+                }
+            })*)*
+        }
+    }
+
+    value_conv!(
+        Value::integer => [u8, u16, u32, i8, i16, i32, i64],
+        Value::double  => [f32, f64],
+        Value::string  => [String, &'static str],
+        Value::bool    => [bool]
+    );
+
+    // array!["test", 1, 2 "test"]
+    macro_rules! array {
+        [] => (Value::Array(Vec::<Value>::new()));
+        [$($val:expr),*] => (Value::Array(<[_]>::into_vec(Box::new([$(Value::from($val)),*]))));
     }
 
     //
@@ -95,7 +135,44 @@ mod tests {
     //
     //
     // macro_rules! dict { }
-    // macro_rules! array { }
+    //
+
+    macro_rules! dict {
+        {} => Value::dict(),
+        { $($key:expr => $value:expr),* } => {
+            // TODO: @zerosign dictionary can't be
+        }
+    }
+
+    #[test]
+    fn test_macro_rule_empty_array() {
+        assert_eq!(array![], Value::Array(vec![]));
+    }
+
+    #[test]
+    fn test_macro_rule_literal_array() {
+        assert_eq!(
+            array![1, 2, 3.2, 4, "test"],
+            Value::Array(vec![
+                Value::integer(1),
+                Value::integer(2),
+                Value::double(3.2),
+                Value::integer(4),
+                Value::string("test"),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_macro_rule_complex_array() {
+        assert_eq!(
+            array![1, array![1, 2]],
+            Value::Array(vec![
+                Value::integer(1),
+                Value::Array(vec![Value::integer(1), Value::integer(2),])
+            ])
+        );
+    }
 
     impl Queryable for Value {
         #[inline]
@@ -140,41 +217,29 @@ mod tests {
 
     #[test]
     fn test_lookup_simple_array() {
-        let sample = Value::Array(vec![Value::Literal(Literal::String(String::from(
-            "Hello world",
-        )))]);
+        let sample = array!["Hello world"];
 
         let found = lookup(sample, "[0]");
 
-        assert_eq!(
-            found,
-            Ok(Value::Literal(Literal::String(String::from("Hello world"))))
-        );
+        assert_eq!(found, Ok(Value::string("Hello world")));
     }
 
     #[test]
     fn test_lookup_complex_array() {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let sample = Value::Array(vec![Value::Array(vec![Value::Literal(Literal::String(
-            String::from("Hello world"),
-        ))])]);
+        let sample = array![array!["Hello world"]];
 
         let found = lookup(sample, "[0].[0]");
 
-        assert_eq!(
-            found,
-            Ok(Value::Literal(Literal::String(String::from("Hello world"))))
-        );
+        assert_eq!(found, Ok(Value::string("Hello world")));
     }
 
     #[test]
     fn test_lookup_index_not_exists_array() {
         let _ = env_logger::builder().is_test(true).try_init();
 
-        let sample = Value::Array(vec![Value::Array(vec![Value::Literal(Literal::String(
-            String::from("Hello world"),
-        ))])]);
+        let sample = array![array!["test"]];
 
         let found = lookup(sample, "[1]");
 
@@ -182,4 +247,7 @@ mod tests {
 
         assert_eq!(found, Err(Error::IndexNotExist(1)),);
     }
+
+    #[test]
+    fn test_lookup_simple_dict() {}
 }
