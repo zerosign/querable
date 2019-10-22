@@ -1,3 +1,5 @@
+extern crate log;
+
 use std::borrow::Cow;
 
 pub mod error;
@@ -18,11 +20,15 @@ where
 
 #[cfg(test)]
 mod tests {
-
     #![feature(slice_patterns)]
+
+    extern crate env_logger;
+    extern crate log;
+
     use super::{
         error::{Error, IndexError},
         kind::QueryKind,
+        lookup,
         types::Queryable,
     };
 
@@ -133,5 +139,47 @@ mod tests {
     }
 
     #[test]
-    fn test_lookup_dictionary() {}
+    fn test_lookup_simple_array() {
+        let sample = Value::Array(vec![Value::Literal(Literal::String(String::from(
+            "Hello world",
+        )))]);
+
+        let found = lookup(sample, "[0]");
+
+        assert_eq!(
+            found,
+            Ok(Value::Literal(Literal::String(String::from("Hello world"))))
+        );
+    }
+
+    #[test]
+    fn test_lookup_complex_array() {
+        let _ = env_logger::builder().is_test(true).try_init();
+
+        let sample = Value::Array(vec![Value::Array(vec![Value::Literal(Literal::String(
+            String::from("Hello world"),
+        ))])]);
+
+        let found = lookup(sample, "[0].[0]");
+
+        assert_eq!(
+            found,
+            Ok(Value::Literal(Literal::String(String::from("Hello world"))))
+        );
+    }
+
+    #[test]
+    fn test_lookup_index_not_exists_array() {
+        let _ = env_logger::builder().is_test(true).try_init();
+
+        let sample = Value::Array(vec![Value::Array(vec![Value::Literal(Literal::String(
+            String::from("Hello world"),
+        ))])]);
+
+        let found = lookup(sample, "[1]");
+
+        assert!(found.is_err());
+
+        assert_eq!(found, Err(Error::IndexNotExist(1)),);
+    }
 }

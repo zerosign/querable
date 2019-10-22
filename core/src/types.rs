@@ -13,7 +13,9 @@ use crate::{
 
 fn index_parse(key: &str, block: &[char; 2]) -> Result<usize, IndexError> {
     if key.starts_with(block[0]) && key.ends_with(block[1]) && key.len() > 2 {
-        key[1..key.len() - 1]
+        let index = &key[1..key.len() - 1];
+
+        index
             .parse::<usize>()
             .map_err(|e| IndexError::ParseError(e))
     } else {
@@ -29,7 +31,7 @@ where
     Self: Sized,
 {
     fn query(&self, path: &str) -> Result<Self, Error> {
-        let tokens = path.splitn(1, DICT_SEP).collect::<Vec<_>>();
+        let tokens = path.splitn(2, DICT_SEP).collect::<Vec<_>>();
         let slices = tokens.as_slice();
 
         match self.query_kind() {
@@ -37,6 +39,7 @@ where
                 &[key, next] => self
                     .query_dict(key)
                     .and_then(move |child| child.query(next)),
+                // base case
                 &[key] => self.query_dict(key),
                 _ => Err(Error::EmptyPath(QueryKind::Dictionary)),
             },
@@ -48,6 +51,7 @@ where
                         _ => Err(Error::IndexNotExist(index)),
                     }
                 }
+                // base case
                 &[key] => {
                     let index = index_parse(key, &ARRAY_BLOCK)?;
                     self.query_array(index)
