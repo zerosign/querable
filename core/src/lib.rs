@@ -23,6 +23,16 @@ pub mod types;
 use error::Error;
 use types::{Queryable, Tokenizer};
 
+///
+/// The entrypoint function for doing a lookup over data structure.
+///
+/// You need to specify `T` for [Tokenizer](Tokenizer) when calling the function.
+///
+/// example :
+/// ```
+/// // lookup<_, _, DefaultTokenizer>(value, "[0]");
+/// ```
+///
 pub fn lookup<'a, V: 'a, Q, T>(v: &V, query: Q) -> Result<V, Error>
 where
     Q: Into<Cow<'a, str>>,
