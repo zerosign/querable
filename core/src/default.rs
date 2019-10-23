@@ -20,3 +20,19 @@ impl Tokenizer for DefaultTokenizer {
         key.splitn(2, DICT_SEP).collect::<Vec<_>>()
     }
 }
+
+pub struct SlashTokenizer;
+
+impl Tokenizer for SlashTokenizer {
+    fn index_parse(key: &str) -> Result<usize, IndexError> {
+        key.parse::<usize>().map_err(IndexError::ParseError)
+    }
+
+    fn dict_parse(key: &str) -> Vec<&str> {
+        if !key.is_empty() {
+            key[1..key.len()].splitn(2, '/').collect::<Vec<_>>()
+        } else {
+            Vec::with_capacity(0)
+        }
+    }
+}

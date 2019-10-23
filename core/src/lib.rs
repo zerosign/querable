@@ -23,7 +23,7 @@ pub mod types;
 use error::Error;
 use types::{Queryable, Tokenizer};
 
-pub fn lookup<'a, V: 'a, Q, T>(v: V, query: Q) -> Result<V, Error>
+pub fn lookup<'a, V: 'a, Q, T>(v: &V, query: Q) -> Result<V, Error>
 where
     Q: Into<Cow<'a, str>>,
     V: Queryable,
@@ -40,7 +40,7 @@ mod tests {
     extern crate log;
 
     use super::{
-        default::DefaultTokenizer,
+        default::{DefaultTokenizer, SlashTokenizer},
         error::{Error, IndexError},
         kind::QueryKind,
         lookup,
@@ -274,8 +274,10 @@ mod tests {
     fn test_lookup_simple_array() {
         let sample = array!["Hello world"];
 
-        let found = lookup::<_, _, DefaultTokenizer>(sample, "[0]");
+        let found = lookup::<_, _, DefaultTokenizer>(&sample, "[0]");
+        assert_eq!(found, Ok(Value::string("Hello world")));
 
+        let found = lookup::<_, _, SlashTokenizer>(&sample, "/0");
         assert_eq!(found, Ok(Value::string("Hello world")));
     }
 
@@ -285,7 +287,7 @@ mod tests {
 
         let sample = array![array!["Hello world"]];
 
-        let found = lookup::<_, _, DefaultTokenizer>(sample, "[0].[0]");
+        let found = lookup::<_, _, DefaultTokenizer>(&sample, "[0].[0]");
 
         assert_eq!(found, Ok(Value::string("Hello world")));
     }
@@ -296,7 +298,7 @@ mod tests {
 
         let sample = array![array!["test"]];
 
-        let found = lookup::<_, _, DefaultTokenizer>(sample, "[1]");
+        let found = lookup::<_, _, DefaultTokenizer>(&sample, "[1]");
 
         assert!(found.is_err());
 
