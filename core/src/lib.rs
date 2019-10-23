@@ -1,20 +1,35 @@
+//!
+//! Querable library.
+//!
+//! Querable give user a choice for implementing queryable data structure
+//! by giving some customization on how datastructure can be traversed.
+//!
+//! Currently, it give a user a freedom for defining how to :
+//! - resolve an array query by defining `Queryable::kind`, `Queryable::query_dict` and `Queryable::query_array`
+//! - how to parse or identify an index or key resolution by implementing custom `Tokenizer`
+//!
+//! There is default `Tokenizer` defined in this crates at `crate::default::DefaultTokenizer`
+//! that uses `[_]` for array index and `path.*` as dictionary resolutions.
+//!
 extern crate log;
 
 use std::borrow::Cow;
 
+pub mod default;
 pub mod error;
 pub mod kind;
 pub mod types;
 
 use error::Error;
-use types::Queryable;
+use types::{Queryable, Tokenizer};
 
-pub fn lookup<'a, V: 'a, Q>(v: V, query: Q) -> Result<V, Error>
+pub fn lookup<'a, V: 'a, Q, T>(v: V, query: Q) -> Result<V, Error>
 where
     Q: Into<Cow<'a, str>>,
     V: Queryable,
+    T: Tokenizer,
 {
-    v.query(&query.into())
+    v.query::<T>(&query.into())
 }
 
 #[cfg(test)]
@@ -25,10 +40,11 @@ mod tests {
     extern crate log;
 
     use super::{
+        default::DefaultTokenizer,
         error::{Error, IndexError},
         kind::QueryKind,
         lookup,
-        types::Queryable,
+        types::{Queryable, Tokenizer},
     };
 
     use std::{borrow::Cow, collections::HashMap};
@@ -136,12 +152,51 @@ mod tests {
     //
     // macro_rules! dict { }
     //
-
+    // copied from https://github.com/bluss/maplit/blob/master/src/lib.rs#L46-L61
     macro_rules! dict {
-        {} => Value::dict(),
-        { $($key:expr => $value:expr),* } => {
-            // TODO: @zerosign dictionary can't be
-        }
+        (@single $($x:tt)*) => (());
+        (@count $($rest:expr),*) => (<[()]>::len(&[$(dict!(@single $rest)),*]));
+
+        ($($key:expr => $value:expr,)+) => { dict!($(String::from($key) => Value::from($value)),+) };
+        ($($key:expr => $value:expr),*) => {
+            {
+                let _cap = dict!(@count $($key),*);
+                let mut _map = ::std::collections::HashMap::with_capacity(_cap);
+                $(
+                    let _ = _map.insert(String::from($key), Value::from($value));
+                )*
+                Value::Dictionary(_map)
+            }
+        };
+    }
+
+    #[test]
+    fn test_macro_rule_empty_dict() {
+        assert_eq!(dict! {}, Value::dict());
+    }
+
+    #[test]
+    fn test_macro_rule_literal_dict() {
+        let sample = dict! {
+            "test" => dict! {
+                "hello" => array!["world"],
+            }
+        };
+
+        let expected = {
+            let mut inner = HashMap::new();
+            inner.insert(String::from("test"), {
+                let mut inner2 = HashMap::new();
+                inner2.insert(
+                    String::from("hello"),
+                    Value::Array(vec![Value::string("world")]),
+                );
+                Value::Dictionary(inner2)
+            });
+            Value::Dictionary(inner)
+        };
+
+        assert_eq!(sample, expected);
     }
 
     #[test]
@@ -219,7 +274,7 @@ mod tests {
     fn test_lookup_simple_array() {
         let sample = array!["Hello world"];
 
-        let found = lookup(sample, "[0]");
+        let found = lookup::<_, _, DefaultTokenizer>(sample, "[0]");
 
         assert_eq!(found, Ok(Value::string("Hello world")));
     }
@@ -230,7 +285,7 @@ mod tests {
 
         let sample = array![array!["Hello world"]];
 
-        let found = lookup(sample, "[0].[0]");
+        let found = lookup::<_, _, DefaultTokenizer>(sample, "[0].[0]");
 
         assert_eq!(found, Ok(Value::string("Hello world")));
     }
@@ -241,7 +296,7 @@ mod tests {
 
         let sample = array![array!["test"]];
 
-        let found = lookup(sample, "[1]");
+        let found = lookup::<_, _, DefaultTokenizer>(sample, "[1]");
 
         assert!(found.is_err());
 
