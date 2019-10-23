@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 tmpl-value = { git = "https://github.com/zerosign/tmpl" }
+querable-core = { path = "../core" }

@@ -11,6 +11,7 @@
 //! There is default `Tokenizer` defined in this crates at `crate::default::DefaultTokenizer`
 //! that uses `[_]` for array index and `path.*` as dictionary resolutions.
 //!
+#![deny(intra_doc_link_resolution_failure)]
 extern crate log;
 
 use std::borrow::Cow;
