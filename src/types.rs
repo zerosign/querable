@@ -6,7 +6,7 @@
 //! the data structure only need to implement which type of Self ~ QueryKind.
 //!
 use crate::{
-    error::{Error, IndexError},
+    error::{Error, IndexError, KeyError},
     kind::QueryKind,
 };
 
@@ -27,7 +27,7 @@ pub trait Tokenizer {
 
     /// Tokenizing path steps.
     ///
-    fn dict_parse(key: &str) -> Vec<&str>;
+    fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError>;
 }
 
 /// Queryable
@@ -40,7 +40,7 @@ where
     where
         T: Tokenizer,
     {
-        let tokens = T::dict_parse(path);
+        let tokens = T::dict_parse(path)?;
         let slices = tokens.as_slice();
 
         match self.query_kind() {

@@ -10,6 +10,7 @@ pub enum Error {
     EmptyPath(QueryKind),
     UnknownType(String),
     IndexError(IndexError),
+    KeyError(KeyError),
     // path, expected, found
     TypeError(String, QueryKind, QueryKind),
 }
@@ -20,12 +21,18 @@ pub enum IndexError {
     EmptyIndex,
 }
 
-// impl<'a> convert::Into<Error<'a>> for IndexError {
-//     #[inline]
-//     fn into(self) -> Error<'a> {
-//         Error::IndexError(self)
-//     }
-// }
+#[derive(Debug, PartialEq)]
+pub enum KeyError {
+    ParseError,
+    EmptyKey,
+}
+
+impl convert::From<KeyError> for Error {
+    #[inline]
+    fn from(e: KeyError) -> Self {
+        Error::KeyError(e)
+    }
+}
 
 impl convert::From<IndexError> for Error {
     #[inline]

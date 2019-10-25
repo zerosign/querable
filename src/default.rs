@@ -1,4 +1,7 @@
-use crate::{error::IndexError, types::Tokenizer};
+use crate::{
+    error::{IndexError, KeyError},
+    types::Tokenizer,
+};
 
 ///
 /// [DefaultTokenizer](DefaultTokenizer) have a format query likes :
@@ -12,7 +15,6 @@ impl Tokenizer for DefaultTokenizer {
     fn index_parse(key: &str) -> Result<usize, IndexError> {
         if key.starts_with('[') && key.ends_with(']') && key.len() > 2 {
             let index = &key[1..key.len() - 1];
-
             index.parse::<usize>().map_err(IndexError::ParseError)
         } else {
             Err(IndexError::EmptyIndex)
@@ -20,8 +22,14 @@ impl Tokenizer for DefaultTokenizer {
     }
 
     #[inline]
-    fn dict_parse(key: &str) -> Vec<&str> {
-        key.splitn(2, '.').collect::<Vec<_>>()
+    fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError> {
+        let r = key.splitn(2, '.').collect::<Vec<_>>();
+
+        if r.is_empty() {
+            Err(KeyError::EmptyKey)
+        } else {
+            Ok(r)
+        }
     }
 }
 
@@ -39,12 +47,51 @@ impl Tokenizer for SlashTokenizer {
         key.parse::<usize>().map_err(IndexError::ParseError)
     }
 
-    fn dict_parse(key: &str) -> Vec<&str> {
-        // TODO: @zerosign (checks for empty string in key)
-        if !key.is_empty() {
-            key[1..key.len()].splitn(2, '/').collect::<Vec<_>>()
+    fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError> {
+        let key = key.trim();
+        if key.is_empty() {
+            Err(KeyError::EmptyKey)
+        } else if !key.starts_with('/') {
+            // key should always prefixed with slash
+            Err(KeyError::ParseError)
         } else {
-            Vec::with_capacity(0)
+            let r = key[1..key.len()].splitn(2, '/').collect::<Vec<_>>();
+            // r will always have at least size of 1
+            // since key is not empty
+            assert!(r.len() >= 1);
+            // check whether first index value are not empty
+            if r[0].is_empty() {
+                Err(KeyError::EmptyKey)
+            } else {
+                Ok(r)
+            }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DefaultTokenizer, SlashTokenizer};
+    use crate::{
+        error::{Error, IndexError, KeyError},
+        types::Tokenizer,
+    };
+
+    #[test]
+    fn test_slash_tokenizer_empty_keys() {
+        assert_eq!(SlashTokenizer::dict_parse(""), Err(KeyError::EmptyKey));
+    }
+
+    #[test]
+    fn test_slash_tokenizer_wrong_paths() {
+        assert_eq!(
+            SlashTokenizer::dict_parse("test."),
+            Err(KeyError::ParseError)
+        );
+    }
+
+    #[test]
+    fn test_slash_tokenizer_empty_first_key() {
+        assert_eq!(SlashTokenizer::dict_parse("//"), Err(KeyError::EmptyKey));
     }
 }
