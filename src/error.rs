@@ -1,5 +1,5 @@
 use crate::kind::QueryKind;
-use std::{convert, error::Error as StdError, num::ParseIntError};
+use std::{convert, num::ParseIntError};
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
