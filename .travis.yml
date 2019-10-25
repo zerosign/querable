@@ -30,5 +30,5 @@ script:
   - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test
 
-after_sucess:
+after_success:
   - .config/benchmark.sh
