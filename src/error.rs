@@ -1,5 +1,5 @@
 use crate::kind::QueryKind;
-use std::{convert, num::ParseIntError};
+use std::{convert, error::Error as StdError, num::ParseIntError};
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
@@ -17,14 +17,18 @@ pub enum Error {
 
 #[derive(Debug, PartialEq)]
 pub enum IndexError {
-    ParseError(ParseIntError),
-    EmptyIndex,
+    IntError(ParseIntError),
+    ParseError(String),
+    // TODO: @zerosign, maybe use StdError ?
+    CustomError(String),
 }
 
 #[derive(Debug, PartialEq)]
 pub enum KeyError {
-    ParseError,
+    ParseError(String),
     EmptyKey,
+    // TODO: @zerosign, maybe use StdError ?
+    CustomError(String),
 }
 
 impl convert::From<KeyError> for Error {

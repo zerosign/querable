@@ -30,7 +30,10 @@ pub trait Tokenizer {
     fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError>;
 }
 
-/// Queryable
+/// Queryable trait.
+///
+/// The main trait that need to be implemented by data structure.
+/// This trait assume that `Self` are sum types or linear? type.
 ///
 pub trait Queryable
 where

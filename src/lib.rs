@@ -45,20 +45,19 @@ where
 
 #[cfg(test)]
 mod tests {
-    #![feature(slice_patterns)]
 
     extern crate env_logger;
     extern crate log;
 
     use super::{
         default::{DefaultTokenizer, SlashTokenizer},
-        error::{Error, IndexError},
+        error::Error,
         kind::QueryKind,
         lookup,
-        types::{Queryable, Tokenizer},
+        types::Queryable,
     };
 
-    use std::{borrow::Cow, collections::HashMap};
+    use std::collections::HashMap;
 
     #[derive(Debug, Clone, PartialEq)]
     pub enum Number {
@@ -315,7 +314,4 @@ mod tests {
 
         assert_eq!(found, Err(Error::IndexNotExist(1)),);
     }
-
-    #[test]
-    fn test_lookup_simple_dict() {}
 }
