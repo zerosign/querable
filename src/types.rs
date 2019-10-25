@@ -10,6 +10,13 @@ use crate::{
     kind::QueryKind,
 };
 
+///
+/// Type that represents the return state of [Tokenizer::dict_parse](Tokenizer::dict_parse).
+///
+/// (current, next).
+///
+pub type State<'a> = (Option<&'a str>, Option<&'a str>);
+
 /// Tokenizer trait.
 ///
 /// This trait should be implemented if you need to have custom
@@ -27,7 +34,7 @@ pub trait Tokenizer {
 
     /// Tokenizing path steps.
     ///
-    fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError>;
+    fn dict_parse(key: &str) -> Result<State, KeyError>;
 }
 
 /// Queryable trait.
@@ -44,19 +51,18 @@ where
         T: Tokenizer,
     {
         let tokens = T::dict_parse(path)?;
-        let slices = tokens.as_slice();
 
         match self.query_kind() {
-            Some(QueryKind::Dictionary) => match *slices {
-                [key, next] => self
+            Some(QueryKind::Dictionary) => match tokens {
+                (Some(key), Some(next)) => self
                     .query_dict(key)
                     .and_then(move |child| child.query::<T>(next)),
                 // base case
-                [key] => self.query_dict(key),
+                (Some(key), None) => self.query_dict(key),
                 _ => Err(Error::EmptyPath(QueryKind::Dictionary)),
             },
-            Some(QueryKind::Array) => match *slices {
-                [key, next] => {
+            Some(QueryKind::Array) => match tokens {
+                (Some(key), Some(next)) => {
                     let index = T::index_parse(key)?;
                     match self.query_array(index) {
                         Ok(child) => child.query::<T>(next),
@@ -64,7 +70,7 @@ where
                     }
                 }
                 // base case
-                [key] => {
+                (Some(key), None) => {
                     let index = T::index_parse(key)?;
                     self.query_array(index)
                 }

@@ -313,4 +313,18 @@ mod tests {
 
         assert_eq!(found, Err(Error::IndexNotExist(1)),);
     }
+
+    #[test]
+    fn test_lookup_value_dict_slash_tokenizer() {
+        let data = array![dict! {
+            "id" => 12,
+            "child" => 2,
+        }];
+
+        let found = lookup::<_, _, SlashTokenizer>(&data, "/0/id");
+
+        println!("{:?}", found);
+
+        assert!(found.is_ok());
+    }
 }

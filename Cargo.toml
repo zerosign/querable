@@ -15,3 +15,8 @@ keywords = ["querable", "traits", "typeclass"]
 [dev-dependencies]
 log = "0.4.8"
 env_logger = "0.7.1"
+criterion = "0.3"
+
+[[bench]]
+name = "lookup_benches"
+harness = false
