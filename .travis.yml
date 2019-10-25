@@ -3,3 +3,24 @@ rust:
   - stable
   - beta
   - nightly
+
+cache:
+  directories:
+    - /home/travis/.cargo
+    - /home/travis/.rustup
+
+before_cache:
+  - rm -rf /home/travis/.cargo/registry
+
+before_script:
+  - rustup component add clippy
+  - cargo install critcmp --force
+  # - cargo install semverver --force
+
+script:
+  - cargo check
+  - cargo clippy --all-targets --all-features -- -D warnings
+  - cargo test
+  - cargo bench --benchmark -- --noplot --save-baseline before
+  - cargo bench --benchmark -- --noplot --save-baseline after
+  - critcmp before after

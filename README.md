@@ -9,6 +9,6 @@
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
 [mit-url]: LICENSE
 
-[API Docs](https://docs.rs/tokio/0.0.1/querable)
+[API Docs](https://docs.rs/querable/0.0.2/querable)
 
 Quer(y)able data structure implementation.

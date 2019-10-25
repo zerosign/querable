@@ -1,16 +1,19 @@
 [package]
 name = "querable"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["zerosign <r1nlx0@gmail.com>"]
 edition = "2018"
 license = "MIT"
 readme = "README.md"
-documentation = "https://docs.rs/querable/0.0.1/querable"
+documentation = "https://docs.rs/querable/0.0.2/querable"
 repository = "https://github.com/zerosign/querable"
 homepage = "https://github.com/zerosign/querable"
 description = "Quer(y)able data structure implementation."
 categories = ["data-structures"]
 keywords = ["querable", "traits", "typeclass"]
+
+[badges]
+travis-ci = { repository = "zerosign/querable" }
 
 [dev-dependencies]
 log = "0.4.8"
