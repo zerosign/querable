@@ -46,7 +46,7 @@ impl Tokenizer for DefaultTokenizer {
     /// ```rust
     /// use querable::{types::Tokenizer, default::DefaultTokenizer, error::{KeyError}};
     ///
-    /// assert_eq!(DefaultTokenizer::dict_parse("   .test"), Err(KeyError::EmptyKey));
+    /// assert_eq!(DefaultTokenizer::dict_parse("   .test"), Err(KeyError::ParseError(String::from("   "))));
     /// assert_eq!(DefaultTokenizer::dict_parse(""), Err(KeyError::EmptyKey));
     /// ```
     ///
