@@ -21,6 +21,8 @@ script:
   - cargo check
   - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test
-  - cargo bench --bench lookup_benches -- --noplot --save-baseline .benchmark/before
-  - cargo bench --bench lookup_benches -- --noplot --save-baseline .benchmark/after
-  - critcmp .benchmark/before .benchmark/after
+  - git checkout master
+  - cargo bench --bench lookup_benches -- --noplot --save-baseline before
+  - git checkout $TRAVIS_COMMIT
+  - cargo bench --bench lookup_benches -- --noplot --save-baseline after
+  - critcmp before after
