@@ -4,6 +4,14 @@ rust:
   - beta
   - nightly
 
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+
+git:
+  depth: false
+
 cache:
   directories:
     - /home/travis/.cargo
@@ -21,8 +29,6 @@ script:
   - cargo check
   - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test
-  - git checkout master
-  - cargo bench --bench lookup_benches -- --noplot --save-baseline before
-  - git checkout $TRAVIS_COMMIT
-  - cargo bench --bench lookup_benches -- --noplot --save-baseline after
-  - critcmp before after
+
+after_sucess:
+  - .config/benchmark.sh
