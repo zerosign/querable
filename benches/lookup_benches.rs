@@ -9,7 +9,6 @@ use querable::{
     default::{DefaultTokenizer, SlashTokenizer},
     error::Error,
     kind::QueryKind,
-    lookup,
     types::Queryable,
 };
 
@@ -148,8 +147,8 @@ impl Queryable for Value {
         match self {
             Value::Dictionary(d) => d
                 .get(path)
-                .map(|v| v.clone())
-                .ok_or(Error::KeyNotExist(String::from(path))),
+                .cloned()
+                .ok_or_else(|| Error::KeyNotExist(String::from(path))),
             Value::Array(_) => Err(Error::TypeError(
                 String::from(path),
                 QueryKind::Array,
@@ -161,10 +160,7 @@ impl Queryable for Value {
 
     fn query_array(&self, idx: usize) -> Result<Self, Error> {
         match self {
-            Value::Array(d) => d
-                .get(idx)
-                .map(|v| v.clone())
-                .ok_or(Error::IndexNotExist(idx)),
+            Value::Array(d) => d.get(idx).cloned().ok_or(Error::IndexNotExist(idx)),
             Value::Dictionary(_) => Err(Error::TypeError(
                 format!("[{}]", idx),
                 QueryKind::Dictionary,
