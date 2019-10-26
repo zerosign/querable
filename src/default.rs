@@ -1,6 +1,6 @@
 use crate::{
     error::{IndexError, KeyError},
-    types::Tokenizer,
+    types::{State, Tokenizer},
 };
 
 ///
@@ -46,20 +46,32 @@ impl Tokenizer for DefaultTokenizer {
     /// ```rust
     /// use querable::{types::Tokenizer, default::DefaultTokenizer, error::{KeyError}};
     ///
-    /// assert_eq!(DefaultTokenizer::dict_parse("   .test"), Err(KeyError::EmptyKey));
+    /// assert_eq!(DefaultTokenizer::dict_parse("   .test"), Err(KeyError::ParseError(String::from("   "))));
     /// assert_eq!(DefaultTokenizer::dict_parse(""), Err(KeyError::EmptyKey));
     /// ```
     ///
     #[inline]
-    fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError> {
-        let r = key.splitn(2, '.').collect::<Vec<_>>();
-
-        if r.is_empty() {
-            Err(KeyError::EmptyKey)
-        } else if r.len() > 0 && r[0].trim().is_empty() {
+    fn dict_parse(key: &str) -> Result<State, KeyError> {
+        if key.is_empty() {
             Err(KeyError::EmptyKey)
         } else {
-            Ok(r)
+            let size = key.len();
+
+            match key.find('.') {
+                Some(0) => Err(KeyError::EmptyKey),
+                Some(idx) => {
+                    let current = &key[0..idx];
+
+                    match current.find(char::is_whitespace) {
+                        Some(_) => Err(KeyError::ParseError(String::from(current))),
+                        _ => {
+                            let pivot = idx + 1;
+                            Ok((Some(current), Some(&key[pivot..size])))
+                        }
+                    }
+                }
+                _ => Ok((Some(&key[0..size]), None)),
+            }
         }
     }
 }
@@ -102,22 +114,31 @@ impl Tokenizer for SlashTokenizer {
     /// use querable::{types::Tokenizer, default::SlashTokenizer, error::{KeyError, IndexError}};
     /// assert_eq!(SlashTokenizer::dict_parse(""), Err(KeyError::EmptyKey))
     /// ```
-    fn dict_parse(key: &str) -> Result<Vec<&str>, KeyError> {
+    fn dict_parse(key: &str) -> Result<State, KeyError> {
         if key.is_empty() {
             Err(KeyError::EmptyKey)
         } else if !key.starts_with('/') {
             // key should always prefixed with slash
             Err(KeyError::ParseError(String::from(key)))
         } else {
-            let r = key[1..key.len()].splitn(2, '/').collect::<Vec<_>>();
-            // r will always have at least size of 1
-            // since key is not empty
-            assert!(r.len() >= 1);
-            // check whether first index value are not empty
-            if r[0].trim().is_empty() {
-                Err(KeyError::EmptyKey)
-            } else {
-                Ok(r)
+            let size = key.len();
+            // /1/2
+            // 1/2
+            match key[1..size].find('/') {
+                // since path is empty (case "//")
+                Some(0) => Err(KeyError::EmptyKey),
+                // if there is '/', then there will be next
+                Some(idx) => {
+                    let pivot = idx + 1;
+                    let current = &key[1..pivot];
+                    // check whether current have a whitespace or not
+                    // key shouldn't have a whitespace
+                    match current.find(char::is_whitespace) {
+                        Some(_) => Err(KeyError::ParseError(String::from(current))),
+                        _ => Ok((Some(current), Some(&key[pivot..size]))),
+                    }
+                }
+                _ => Ok((Some(&key[1..size]), None)),
             }
         }
     }

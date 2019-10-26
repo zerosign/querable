@@ -69,7 +69,6 @@ mod tests {
         Number(Number),
         String(String),
         Bool(bool),
-        None,
     }
 
     #[derive(Debug, Clone, PartialEq)]
@@ -107,11 +106,6 @@ mod tests {
         #[inline]
         pub fn dict() -> Value {
             Value::Dictionary(HashMap::new())
-        }
-
-        #[inline]
-        pub fn list() -> Value {
-            Value::Array(vec![])
         }
 
         #[inline]
@@ -252,8 +246,8 @@ mod tests {
             match self {
                 Value::Dictionary(d) => d
                     .get(path)
-                    .map(|v| v.clone())
-                    .ok_or(Error::KeyNotExist(String::from(path))),
+                    .cloned()
+                    .ok_or_else(|| Error::KeyNotExist(String::from(path))),
                 Value::Array(_) => Err(Error::TypeError(
                     String::from(path),
                     QueryKind::Array,
@@ -265,10 +259,7 @@ mod tests {
 
         fn query_array(&self, idx: usize) -> Result<Self, Error> {
             match self {
-                Value::Array(d) => d
-                    .get(idx)
-                    .map(|v| v.clone())
-                    .ok_or(Error::IndexNotExist(idx)),
+                Value::Array(d) => d.get(idx).cloned().ok_or(Error::IndexNotExist(idx)),
                 Value::Dictionary(_) => Err(Error::TypeError(
                     format!("[{}]", idx),
                     QueryKind::Dictionary,
@@ -312,5 +303,19 @@ mod tests {
         assert!(found.is_err());
 
         assert_eq!(found, Err(Error::IndexNotExist(1)),);
+    }
+
+    #[test]
+    fn test_lookup_value_dict_slash_tokenizer() {
+        let data = array![dict! {
+            "id" => 12,
+            "child" => 2
+        }];
+
+        let found = lookup::<_, _, SlashTokenizer>(&data, "/0/id");
+
+        println!("{:?}", found);
+
+        assert!(found.is_ok());
     }
 }
