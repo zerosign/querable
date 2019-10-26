@@ -21,14 +21,12 @@ before_cache:
   - rm -rf /home/travis/.cargo/registry
 
 before_script:
-  - rustup component add clippy
-  - cargo install critcmp --force
+  - command -v cargo-clippy 2>&1 || rustup component add clippy
+  - command -v critcmp 2>&1 || cargo install critcmp
   # - cargo install semverver --force
 
 script:
   - cargo check
-  - cargo clippy --all-targets --all-features -- -D warnings
   - cargo test
-
-after_success:
-  - .config/benchmark.sh
+  - cargo bench --bench lookup_benches -- --save-baseline $TRAVIS_COMMIT
+  - cargo clippy --all-targets --all-features -- -D warnings
