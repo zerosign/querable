@@ -1,0 +1,51 @@
+on: [push, pull_request]
+name: benchmark
+jobs:
+  stable:
+    name: stable-bench
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - name: cargo bench
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --bench lookup_benches -- --save-baseline stable
+  beta:
+    name: beta-bench
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: install beta toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: beta
+          override: true
+      - name: cargo bench
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --bench lookup_benches -- --save-baseline beta
+  nightly:
+    name: nightly-bench
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: install nightly toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - name: cargo bench
+        uses: actions-rs/cargo@v1
+        with:
+          command: bench
+          args: --bench lookup_benches -- --save-baseline nightly

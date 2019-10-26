@@ -1,0 +1,69 @@
+on: [push, pull_request]
+name: general
+jobs:
+  nightly-test:
+    name: nightly-test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, window-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@master
+      - name: Install nightly
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          override: true
+      - name: check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --doc
+  beta-test:
+    name: beta-test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, window-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@master
+      - name: install beta
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: beta
+          override: true
+      - name: check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --doc
+  stable-test:
+    name: stable-test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, window-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@master
+      - name: install stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+      - name: tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --doc

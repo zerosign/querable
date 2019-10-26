@@ -36,7 +36,6 @@ script:
   - cargo check
   - cargo test
   - cargo bench --bench lookup_benches -- --save-baseline $TRAVIS_COMMIT
-  - (command -v cargo-clippy 2>&1 || rustup component add clippy) && cargo clippy --all-targets --all-features -- -D warnings
 
 branches:
   only:
