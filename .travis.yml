@@ -37,10 +37,12 @@ script:
   - cargo check
   - cargo test
   - cargo bench --bench lookup_benches -- --save-baseline $TRAVIS_COMMIT
-  - cargo clippy --all-targets --all-features -- -D warnings
+  - $HOME/.cargo/bin/cargo-clippy --all-targets --all-features -- -D warnings
 
 branches:
   only:
     - master
     - auto
+    - trying
+    - staging
     - try
