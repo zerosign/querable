@@ -11,6 +11,7 @@ homepage = "https://github.com/zerosign/querable"
 description = "Quer(y)able data structure implementation."
 categories = ["data-structures"]
 keywords = ["querable", "traits", "typeclass"]
+include = ["**/*.rs", "Cargo.toml"]
 
 [badges]
 travis-ci = { repository = "zerosign/querable" }

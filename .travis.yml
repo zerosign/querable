@@ -12,6 +12,13 @@ matrix:
 git:
   depth: false
 
+if: branch = auto OR branch = try OR type = pull_request OR type = cron
+
+env:
+  global:
+    - RUST_TEST_NOCAPTURE=1
+    - RUST_BACKTRACE=1
+
 cache:
   directories:
     - $HOME/.cargo
@@ -22,7 +29,6 @@ before_cache:
   - rm -rf $HOME/.cargo/registry
 
 before_script:
-  - command -v cargo-clippy 2>&1 || rustup component add clippy
   - command -v critcmp 2>&1 || cargo install critcmp
   # - cargo install semverver --force
 
@@ -30,4 +36,11 @@ script:
   - cargo check
   - cargo test
   - cargo bench --bench lookup_benches -- --save-baseline $TRAVIS_COMMIT
-  - cargo clippy --all-targets --all-features -- -D warnings
+
+branches:
+  only:
+    - master
+    - auto
+    - trying
+    - staging
+    - try
